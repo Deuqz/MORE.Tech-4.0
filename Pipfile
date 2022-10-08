@@ -17,7 +17,6 @@ sentence-transformers = "*"
 numpy = "*"
 pandas = "*"
 pymystem3 = "*"
-pickle = "*"
 tqdm = "*"
 
 [dev-packages]
