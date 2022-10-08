@@ -90,7 +90,7 @@ class ConsultantRuParser(Parser):
                     news.append(News(tag="non-core", site='conslutant', header=header.span.string, date=date, views=None,
                                      link=text_url, text=self.get_text(text_url)))
                 else:
-                    news.append(News(tag="non-core", site='conslutant', header=header.span.string, date=date, views=None,
+                    news.append(News(tag="none-core", site='conslutant', header=header.span.string, date=date, views=None,
                                      link=text_url, text=None))
             except:
                 raise
@@ -177,10 +177,10 @@ class RiaRuParser(Parser):
 
                 views = item.find_next('div',
                                        attrs={'class': "list-item__info"}).select_one(r'[class="list-item__views-text"]')
-                if views is None:
+                if views.string is None:
                     views = 0
                 else:
-                    views = int(views.string)
+                    views = None
                 news_date = item.select_one(r'[class="list-item__date"]').text
                 news_date = parse_string_into_date(news_date)
                 text_url = header['href']
