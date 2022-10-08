@@ -2,13 +2,14 @@ import re
 from nltk.corpus import stopwords
 from pymystem3 import Mystem
 from tqdm import tqdm
+from typing import List
 
 
-def clean_data(texts: list[str], verbose: bool = False) -> [str]:
+def clean_data(texts: List[str], verbose: bool = False) -> List[str]:
     stem = Mystem()
     len_texts = len(texts)
     russian_stopwords = stopwords.words("russian")
-    clean_texts = [[] for _ in range(len_texts)]
+    clean_texts = ['' for _ in range(len_texts)]
     if verbose:
         iterations = tqdm(range(len_texts))
     else:
@@ -23,3 +24,5 @@ def clean_data(texts: list[str], verbose: bool = False) -> [str]:
         clean_lemmas = re.sub("^\s+|\n|\r|\s+$", '', clean_lemmas)
         clean_texts[i] = clean_lemmas
     return clean_texts
+
+
