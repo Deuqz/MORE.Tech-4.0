@@ -119,6 +119,7 @@ class RiaRuParser(Parser):
             else:
                 try:
                     nxt_url = soup.select_one(r'[class="list-items-loaded"]')['data-next-url']
+                    print(nxt_url)
                 except:
                     break
             if nxt_url is None:
@@ -163,6 +164,25 @@ class RiaRuParser(Parser):
 
 class KlerkRuParser(Parser):
 
+    def parse_news(self, soup: BeautifulSoup, get_text=None) -> [News]:
+        articles = soup.select(r'[class="feed-item feed-item--normal"]')
+        news = []
+        for article in articles:
+            header = article.select_one(r'[class="feed-item__link feed-item-link__check-article"]')
+            views = int(article.select_one(r'[class="stat"]').find('core-count-format')['count'])
+            date = parse(article.select_one(r'[class="feed-item__stats"]').span.find('core-date-format')['date'])
+            text_url = self.SITE + article.select_one(r'[class="feed-item__link feed-item-link__check-article"]')[
+                'href']
+
+            if get_text:
+                text = self.get_text(text_url)
+                news.append(News(tag="accountant", site='klerkru', header=header.string, date=date, views=views,
+                                 link=text_url, text=text))
+            else:
+                news.append(News(tag="accountant", site='klerkru', header=header.string, date=date, views=views,
+                                 link=text_url, text=None))
+        return news
+
     SITE = 'https://www.klerk.ru'
 
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
@@ -190,29 +210,28 @@ class KlerkRuParser(Parser):
     def get_page_news(self, page_num, get_text=False):
         soup = BeautifulSoup(requests.get(self.SITE + f'/buh/news/page/{page_num}').text,
                              'html.parser')
-        articles = soup.select(r'[class="feed-item feed-item--normal"]')
-        news = []
-        for article in articles:
-            header = article.select_one(r'[class="feed-item__link feed-item-link__check-article"]')
-            views = int(article.select_one(r'[class="stat"]').find('core-count-format')['count'])
-            date = parse(article.select_one(r'[class="feed-item__stats"]').span.find('core-date-format')['date'])
-            text_url = self.SITE + article.select_one(r'[class="feed-item__link feed-item-link__check-article"]')['href']
-
-            if get_text:
-                text = self.get_text(text_url)
-                news.append(News(tag="accountant", site='klerkru', header=header.string, date=date, views=views,
-                                 link=text_url, text=text))
-            else:
-                news.append(News(tag="accountant", site='klerkru', header=header.string, date=date, views=views,
-                                 link=text_url))
-        return news
+        return self.parse_news(soup, get_text)
 
 
-class KommersantParser(RiaRuParser):
+class KommersantParser(Parser):
     SITE = 'https://www.kommersant.ru/archive/rubric/4'
 
     def get_filename(self):
         return f'news{type(self).__name__}'
+
+    def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
+        news = []
+        for delta in range((delta_time.days + 14) // 15):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                futures = [executor.submit(self.get_one_day_news,
+                                           datetime.date.today() - datetime.timedelta(days=delta * 15 + i),
+                                           get_text=get_text)
+                           for i in range(15)]
+                for future in concurrent.futures.as_completed(futures):
+                    nw = future.result()
+                    news += nw
+            print('news', len(news))
+        return news
 
     def get_views_and_text(self, url):
         soup = BeautifulSoup(requests.get(url).text, 'html.parser')
@@ -223,7 +242,7 @@ class KommersantParser(RiaRuParser):
                          }).select(r'[class="doc__text"]')
 
         text = ''.join(i.text for i in text)
-        views = 10000
+        views = None
         return views, text
 
     def parse_news(self, soup: BeautifulSoup, **kwargs) -> [News]:
@@ -235,13 +254,14 @@ class KommersantParser(RiaRuParser):
             date = parse(item.select_one(r'[class="uho__tag rubric_lenta__item_tag hide_desktop"]').
                          string.split(',')[0])
             url = item['data-article-url']
-            views = 10000
+            views = None
             if kwargs.get('get_text'):
                 views, text = self.get_views_and_text(url)
                 news.append(News(tag='business', site='kommersant', header=header, date=date,
                                  views=views, link=url, text=text))
             else:
-                news.append(News(tag='business', site='kommersant', header=header, date=date, views=views, link=url))
+                news.append(News(tag='business', site='kommersant', header=header, date=date, views=views,
+                                 link=url, text=None))
         return news
 
     def get_one_day_news(self, date: datetime.date, get_text=False):
@@ -253,4 +273,62 @@ class KommersantParser(RiaRuParser):
             month = '0' + month
         soup = BeautifulSoup(requests.get(self.SITE+f'/day/{date.year}-{month}-{day}').text,
                              'html.parser')
-        return self.parse_news(soup)
+        return self.parse_news(soup, get_text=get_text)
+
+
+class TinkoffParser(Parser):
+    SITE = 'https://journal.tinkoff.ru/'
+
+    def parse_news(self, soup: BeautifulSoup, get_text=None) -> [News]:
+        page = soup.select_one(r'[class="content---3kpa12"]')
+        items = page.select(r'[class="item--HDDKc"]')
+        news = []
+        for item in items:
+            header_info = item.select_one(r'[class="header--RPV23"]')
+            try:
+                header = header_info.select_one(r'[class="link--xmoGM"]')
+                meta = header_info.select_one(r'[class="nowrap--qgOuU"]')
+                date = parse(meta.time['datetime'])
+                views = meta.select_one(r'[class="counter--F0kEv"]').text[:-1]
+            except:
+                continue
+            try:
+                views = int(views)
+            except:
+                views = int(views[:-1])*1000
+            text_url = self.SITE + header['href']
+            if get_text:
+                news.append(News(tag='business', site='tjournal', header=header.text, date=date, views=views,
+                                 link=text_url, text=self.get_text(text_url)))
+            else:
+                news.append(News(tag='business', site='tjournal', header=header.text, date=date, views=views,
+                                 link=text_url, text=None))
+
+        return news
+
+    def get_text(self, url):
+        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+        text = soup.select_one(r'[class="article-body"]').text
+        return text
+
+    def get_news_timed(self, delta_time=None, get_text=None):
+        news = []
+
+        for delta in range(1, 300):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                futures = [executor.submit(self.get_page_news, delta * 15 + i, get_text) for i in range(15)]
+                for future in concurrent.futures.as_completed(futures):
+                    nw = future.result()
+                    news += nw
+            if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
+                                                         datetime.datetime.min.time()):
+                return news
+        return news
+
+    def get_page_news(self, page_num, get_text):
+        try:
+            soup = BeautifulSoup(requests.get(self.SITE+f'flows/business-all/page/{page_num}').text, 'html.parser')
+        except:
+            print(page_num)
+            raise
+        return self.parse_news(soup, get_text)
