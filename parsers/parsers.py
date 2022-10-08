@@ -36,7 +36,6 @@ def parse_string_into_date(string: str):
     try:
         res = datetime.datetime(year=year, day=day, month=month)
     except:
-        print(day)
         raise
     if res > datetime.datetime.today():
         res = datetime.datetime(year=datetime.date.today().year - 1, day=day, month=month)
@@ -44,22 +43,57 @@ def parse_string_into_date(string: str):
 
 
 class ConsultantRuParser(Parser):
-    SITE = 'https://www.consultant.ru/legalnews/buh/'
+    SITE = 'https://www.consultant.ru'
 
     def __init__(self):
         super(ConsultantRuParser).__init__()
 
+    def get_news_timed(self, delta_time=None, get_text=False):
+        news = []
 
-    def parse_news(self, soup: BeautifulSoup) -> [News]:
-        if soup is None:
-            soup = BeautifulSoup(requests.get(self.SITE, allow_redirects=True).text, 'html.parser')
+        for delta in range(1, 100):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                futures = [executor.submit(self.get_page_news, delta * 15 + i, get_text) for i in range(15)]
+                for future in concurrent.futures.as_completed(futures):
+                    nw = future.result()
+                    news += nw
+            if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
+                                                         datetime.datetime.min.time()):
+                return news
+        return news
 
+    def get_page_news(self, page_num, get_text=False):
+        soup = BeautifulSoup(requests.get(self.SITE+f'/legalnews/?page={page_num}').text, 'html.parser')
+        return self.parse_news(soup, get_text=get_text)
+
+    def get_text(self, url):
+        soup = BeautifulSoup(requests.get(url).text,
+                             'html.parser')
+        page = soup.select_one(r'[class="news-page"]')
+        try:
+            content = page.select_one(r'[class="news-page__content"]')
+            text = content.text
+            return text
+        except:
+            print(page)
+            raise
+    def parse_news(self, soup: BeautifulSoup, get_text=False) -> [News]:
         items = soup.find_all('div', attrs={'class': "listing-news__item"})
         news = []
         for item in items:
-            header = item.select_one(r'[class="listing-news__item-title"]').span.string
-            date = parse_string_into_date(str(item.select_one(r'[class="listing-news__item-date"]').string))
-            news.append(News(tag="non-core", site='conslutant', header=header, date=date, views=None))
+            try:
+                header = item.select_one(r'[class="listing-news__item-title"]')
+                link = header['href']
+                date = parse_string_into_date(str(item.select_one(r'[class="listing-news__item-date"]').string))
+                text_url = self.SITE+link
+                if get_text:
+                    news.append(News(tag="non-core", site='conslutant', header=header.span.string, date=date, views=None,
+                                     link=text_url, text=self.get_text(text_url)))
+                else:
+                    news.append(News(tag="none-core", site='conslutant', header=header.span.string, date=date, views=None,
+                                     link=text_url, text=None))
+            except:
+                raise
         return news
 
 
@@ -143,10 +177,10 @@ class RiaRuParser(Parser):
 
                 views = item.find_next('div',
                                        attrs={'class': "list-item__info"}).select_one(r'[class="list-item__views-text"]')
-                if views is None:
+                if views.string is None:
                     views = 0
                 else:
-                    views = int(views.string)
+                    views = None
                 news_date = item.select_one(r'[class="list-item__date"]').text
                 news_date = parse_string_into_date(news_date)
                 text_url = header['href']
