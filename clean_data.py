@@ -2,9 +2,10 @@ import re
 from nltk.corpus import stopwords
 from pymystem3 import Mystem
 from tqdm import tqdm
+from typing import List
 
 
-def clean_data(texts: list[str], verbose: bool = False) -> [str]:
+def clean_data(texts: List[str], verbose: bool = False) -> List[str]:
     stem = Mystem()
     len_texts = len(texts)
     russian_stopwords = stopwords.words("russian")
