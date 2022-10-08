@@ -26,4 +26,6 @@ class Parser:
     def get_news_timed(self, delta_time=None):
         raise NotImplementedError()
 
+    def get_filename(self):
+        return f'news{type(self).__name__}'
 

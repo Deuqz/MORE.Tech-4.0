@@ -22,14 +22,26 @@ def parse_string_into_date(string: str):
                "ноября", "декабря"]
     try:
         day = int(splited_date[0])
+        if day > 31:
+            print(day)
     except:
         return datetime.date.today()
 
     month = get_month(monthes, splited_date[1])
-    res = datetime.datetime(year=datetime.date.today().year, day=day, month=month)
+    try:
+        year = int(splited_date[2])
+    except:
+        year = datetime.date.today().year
+
+    try:
+        res = datetime.datetime(year=year, day=day, month=month)
+    except:
+        print(day)
+        raise
     if res > datetime.datetime.today():
         res = datetime.datetime(year=datetime.date.today().year - 1, day=day, month=month)
     return res
+
 
 class ConsultantRuParser(Parser):
     SITE = 'https://www.consultant.ru/legalnews/buh/'
@@ -47,12 +59,22 @@ class ConsultantRuParser(Parser):
         for item in items:
             header = item.select_one(r'[class="listing-news__item-title"]').span.string
             date = parse_string_into_date(str(item.select_one(r'[class="listing-news__item-date"]').string))
-            news.append(News(tag="accountant", site='consltant', header=header, date=date, views=None))
+            news.append(News(tag="non-core", site='conslutant', header=header, date=date, views=None))
         return news
 
 
-class LentaRuParser(Parser):
-    SITE = 'https://ria.ru'
+class RiaRuParser(Parser):
+    SITE = 'https://ria.ru/'
+
+    def __init__(self, type_='accountant'):
+        super(RiaRuParser).__init__()
+        if type_ == 'accountant':
+            self.suffix = 'economy/'
+        else:
+            self.suffix = ''
+
+    def get_filename(self):
+        return f'news{type(self).__name__}{"Economy" if self.suffix == "economy/" else "NonCore"}'
 
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
         news = []
@@ -64,7 +86,7 @@ class LentaRuParser(Parser):
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
-            print(len(news))
+            print('news', len(news))
         return news
 
     def get_text(self, url):
@@ -85,7 +107,7 @@ class LentaRuParser(Parser):
         month = str(date.month)
         if len(month) == 1:
             month = '0' + month
-        soup = BeautifulSoup(requests.get(self.SITE + f'/{date.year}{month}{day}').text,
+        soup = BeautifulSoup(requests.get(self.SITE + self.suffix + f'{date.year}{month}{day}').text,
                              'html.parser')
 
         news = self.parse_news(soup, date=date, get_text=get_text)
@@ -101,7 +123,10 @@ class LentaRuParser(Parser):
                     break
             if nxt_url is None:
                 break
-            nxt = requests.get(self.SITE+nxt_url)
+            try:
+                nxt = requests.get(self.SITE+nxt_url)
+            except:
+                break
             soup = BeautifulSoup(nxt.text, 'html.parser')
             news = self.parse_news(soup, date=date, get_text=get_text)
             all_day_news += news
@@ -124,17 +149,21 @@ class LentaRuParser(Parser):
                 news_date = item.select_one(r'[class="list-item__date"]').text
                 news_date = parse_string_into_date(news_date)
                 text_url = header['href']
+                tag = 'none-core' if self.suffix != 'economy/' else 'accountant'
                 if kwargs.get('get_text'):
-                    news.append(News(tag="business", site='ria', header=header.string, date=news_date, views=views,
-                                     link=text_url, text=self.get_text(text_url)))
+                    try:
+                        news.append(News(tag=tag, site='ria', header=header.string, date=news_date, views=views,
+                                         link=text_url, text=self.get_text(text_url)))
+                    except:
+                        continue
                 else:
-                    news.append(News(tag="business", site='ria', header=header.string, date=news_date, views=views, link=text_url))
+                    news.append(News(tag=tag, site='ria', header=header.string, date=news_date, views=views, link=text_url))
             return news
 
 
 class KlerkRuParser(Parser):
 
-    SITE='https://www.klerk.ru'
+    SITE = 'https://www.klerk.ru'
 
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
         news = []
@@ -178,11 +207,50 @@ class KlerkRuParser(Parser):
                                  link=text_url))
         return news
 
-class GlavBukhParser(LentaRuParser):
-    SITE = 'https://www.glavbukh.ru/news'
 
-    def parse_news(self, soup: BeautifulSoup) -> [News]:
-        pass
+class KommersantParser(RiaRuParser):
+    SITE = 'https://www.kommersant.ru/archive/rubric/4'
 
-    def get_news_timed(self, delta_time=None):
-        pass
+    def get_filename(self):
+        return f'news{type(self).__name__}'
+
+    def get_views_and_text(self, url):
+        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
+        page = soup.select_one(r'[class="lenta_top_doc"]')
+        text = page.find('div',
+                         attrs={
+                             'class': 'doc__body article_text_wrapper js-search-mark'
+                         }).select(r'[class="doc__text"]')
+
+        text = ''.join(i.text for i in text)
+        views = 10000
+        return views, text
+
+    def parse_news(self, soup: BeautifulSoup, **kwargs) -> [News]:
+        body = soup.select_one(r'[class="rubric_lenta"]')
+        articles = body.find_all('article', attrs={'class': 'uho rubric_lenta__item js-article'})
+        news = []
+        for item in articles:
+            header = item['data-article-title']
+            date = parse(item.select_one(r'[class="uho__tag rubric_lenta__item_tag hide_desktop"]').
+                         string.split(',')[0])
+            url = item['data-article-url']
+            views = 10000
+            if kwargs.get('get_text'):
+                views, text = self.get_views_and_text(url)
+                news.append(News(tag='business', site='kommersant', header=header, date=date,
+                                 views=views, link=url, text=text))
+            else:
+                news.append(News(tag='business', site='kommersant', header=header, date=date, views=views, link=url))
+        return news
+
+    def get_one_day_news(self, date: datetime.date, get_text=False):
+        day = str(date.day)
+        if len(day) == 1:
+            day = '0' + day
+        month = str(date.month)
+        if len(month) == 1:
+            month = '0' + month
+        soup = BeautifulSoup(requests.get(self.SITE+f'/day/{date.year}-{month}-{day}').text,
+                             'html.parser')
+        return self.parse_news(soup)

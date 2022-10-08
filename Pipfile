@@ -10,6 +10,7 @@ selenium = "*"
 webdriver-manager = "*"
 phantomjs = "*"
 python-dateutil = "*"
+argparse = "*"
 
 [dev-packages]
 
