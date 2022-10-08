@@ -3,7 +3,7 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 
-from parsers.parsers import KlerkRuParser, RiaRuParser, KommersantParser
+from parsers.parsers import KlerkRuParser, RiaRuParser, KommersantParser, ConsultantRuParser
 import csv
 import argparse
 
@@ -29,6 +29,7 @@ def parse_news_timed(parser_class, tag=None, get_text=False, time_=datetime.time
 
 
 def run_parse_all():
+    parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=30))
     parse_news_timed(RiaRuParser, 'non-core', get_text=True, time_=datetime.timedelta(days=30))
     parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
     parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=30))
