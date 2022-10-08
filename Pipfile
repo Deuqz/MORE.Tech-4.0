@@ -11,6 +11,13 @@ webdriver-manager = "*"
 phantomjs = "*"
 python-dateutil = "*"
 argparse = "*"
+nltk = "*"
+scipy = "*"
+sentence-transformers = "*"
+numpy = "*"
+pandas = "*"
+pymystem3 = "*"
+tqdm = "*"
 
 [dev-packages]
 
