@@ -3,12 +3,13 @@ from bs4 import BeautifulSoup
 
 
 class News:
-    def __init__(self, tag, site, header, date, views, text=None):
+    def __init__(self, tag, site, header, date, views, link, text=None):
         self.tag = tag
         self.site = site
         self.header = header
         self.date = date
         self.views = views
+        self.link = link
         if text is not None:
             self.text = text
 
