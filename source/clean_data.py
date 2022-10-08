@@ -20,6 +20,3 @@ def clean_data(texts: list[str], verbose: bool = False) -> [str]:
         clean_lemmas = re.sub('[^A-Za-zА-Яа-я\s]', '', ' '.join(lemmas)).lower()
         clean_texts[i] = clean_lemmas
     return clean_texts
-
-if __name__ == '__main__':
-    print('a')
