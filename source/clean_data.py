@@ -16,7 +16,10 @@ def clean_data(texts: list[str], verbose: bool = False) -> [str]:
     for i in iterations:
         text = texts[i]
         lemmas = stem.lemmatize(text)
-        lemmas = [word for word in lemmas if (word not in russian_stopwords) and (word != ' ') and (word != '\n')]
-        clean_lemmas = re.sub('[^A-Za-zА-Яа-я\s]', '', ' '.join(lemmas)).lower()
+        lemmas = [word for word in lemmas \
+                  if (word not in russian_stopwords) and (word != ' ') and (word != '\n')]
+        lemmas = ' '.join(lemmas)
+        clean_lemmas = re.sub('[^A-Za-zА-Яа-я\s]', '', lemmas).lower()
+        clean_lemmas = re.sub("^\s+|\n|\r|\s+$", '', clean_lemmas)
         clean_texts[i] = clean_lemmas
     return clean_texts
