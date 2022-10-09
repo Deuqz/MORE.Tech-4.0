@@ -28,11 +28,14 @@ class ApiViewSet(ValidationViewSet):
     @action(url_path='trends', methods=['get'], detail=False)
     def handle_trends(self, request):
         role = self.validate(RoleSerializer, request)['role']
-        res = trends.analyze(role)
-        res_dict = []
-        for i, trend in enumerate(res):
-            res_dict.append([{'header': news[0], 'link': news[1]} for news in trend])
-        return Response({'trends': res_dict})
+        ans = []
+        for res in trends.analyze(role):
+            res_dict = []
+            for i, trend in enumerate(res):
+                res_dict.append([{'header': news[0], 'link': news[1]} for news in trend])
+            ans.append(res_dict)
+
+        return Response({'trends': ans[0], 'insights': ans[1]})
 
     @action(url_path='digest', methods=['get'], detail=False)
     def handle_digest(self, request):

@@ -8,6 +8,12 @@ from sklearn.cluster import KMeans
 
 
 def analyze(role: str):
+    res1 = process_role(role)
+    res2 = process_role('none-core')
+    return res1, res2
+
+
+def process_role(role: str):
     df_core = track_repository.get_datasets(role)
 
     target_date = datetime.datetime.now()
