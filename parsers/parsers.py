@@ -51,15 +51,16 @@ class ConsultantRuParser(Parser):
     def get_news_timed(self, delta_time=None, get_text=False):
         news = []
 
-        for delta in range(1, 100):
+        for delta in range(100):
             with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i, get_text) for i in range(15)]
+                futures = [executor.submit(self.get_page_news, delta * 15 + i + 1, get_text) for i in range(15)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
             if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
                                                          datetime.datetime.min.time()):
                 return news
+            print(len(news))
         return news
 
     def get_page_news(self, page_num, get_text=False):
@@ -87,7 +88,7 @@ class ConsultantRuParser(Parser):
                 date = parse_string_into_date(str(item.select_one(r'[class="listing-news__item-date"]').string))
                 text_url = self.SITE+link
                 if get_text:
-                    news.append(News(tag="non-core", site='conslutant', header=header.span.string, date=date, views=None,
+                    news.append(News(tag="none-core", site='conslutant', header=header.span.string, date=date, views=None,
                                      link=text_url, text=self.get_text(text_url)))
                 else:
                     news.append(News(tag="none-core", site='conslutant', header=header.span.string, date=date, views=None,
@@ -222,9 +223,9 @@ class KlerkRuParser(Parser):
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
         news = []
 
-        for delta in range(1, 100):
+        for delta in range(100):
             with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i, get_text) for i in range(15)]
+                futures = [executor.submit(self.get_page_news, delta * 15 + i+1, get_text) for i in range(15)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
@@ -285,8 +286,8 @@ class KommersantParser(Parser):
         news = []
         for item in articles:
             header = item['data-article-title']
-            date = parse(item.select_one(r'[class="uho__tag rubric_lenta__item_tag hide_desktop"]').
-                         string.split(',')[0])
+            date = item.select_one(r'[class="uho__tag rubric_lenta__item_tag hide_desktop"]').string.split(',')[0].split('.')
+            date = datetime.date(year=int(date[2]), day=int(date[0]), month=int(date[1]))
             url = item['data-article-url']
             views = None
             if kwargs.get('get_text'):
@@ -317,6 +318,8 @@ class TinkoffParser(Parser):
         page = soup.select_one(r'[class="content---3kpa12"]')
         items = page.select(r'[class="item--HDDKc"]')
         news = []
+        cnt = 0
+        date = None
         for item in items:
             header_info = item.select_one(r'[class="header--RPV23"]')
             try:
@@ -337,7 +340,8 @@ class TinkoffParser(Parser):
             else:
                 news.append(News(tag='business', site='tjournal', header=header.text, date=date, views=views,
                                  link=text_url, text=None))
-
+        if len(news) == 0:
+            raise Exception(date)
         return news
 
     def get_text(self, url):
@@ -348,15 +352,18 @@ class TinkoffParser(Parser):
     def get_news_timed(self, delta_time=None, get_text=None):
         news = []
 
-        for delta in range(1, 300):
+        for delta in range(300):
             with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i, get_text) for i in range(15)]
+                futures = [executor.submit(self.get_page_news, delta * 15 + i+1, get_text) for i in range(15)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
+            print(datetime.datetime.combine(datetime.date.today() - delta_time,
+                                                         datetime.datetime.min.time()))
             if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
                                                          datetime.datetime.min.time()):
                 return news
+            print(len(news))
         return news
 
     def get_page_news(self, page_num, get_text):
