@@ -21,17 +21,9 @@ class ApiViewSet(ValidationViewSet):
     authentication_classes = ()
     permission_classes = ()
 
-    @action(url_path='news', methods=['get'], detail=False)
-    def handle_insight(self, request):
-
-        return Response({'news': [{'header': 'header1', 'link': 'news1'},
-                                  {'header': 'header2', 'link': 'news2'},
-                                  {'header': 'header3', 'link': 'news3'}]})
-
     @action(url_path='trends', methods=['get'], detail=False)
     def handle_trends(self, request):
         role = self.validate(RoleSerializer, request)['role']
-        res = trends.analyze(role)
         ans = []
         for res in trends.analyze(role):
             res_dict = []
