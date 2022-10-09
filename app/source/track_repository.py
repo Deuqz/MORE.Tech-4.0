@@ -1,9 +1,15 @@
 from collections import defaultdict
 from itertools import chain
 
+import numpy as np
 import pandas as pd
 import os
 
+
+def parse_vector(string: str):
+    string = string[1:-1]
+    vals_str = string.split()
+    vals = np.array([])
 
 def get_datasets(tag: (str | None) = None):
     content = os.listdir('../data')
@@ -21,6 +27,8 @@ def get_datasets(tag: (str | None) = None):
     else:
         all_datasets = pd.concat(datasets[tag])
 
+    all_datasets['vectorized_headers'] = all_datasets['vectorized_headers'].apply(parse_vector)
+    all_datasets['vectorized_text'] = all_datasets['vectorized_text'].apply(parse_vector)
     return all_datasets
 
 def get_all_datasets(tag: (str | None) = None):
