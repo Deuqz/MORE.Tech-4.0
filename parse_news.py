@@ -2,8 +2,12 @@ import datetime
 
 import requests
 from bs4 import BeautifulSoup
+import nltk
+from source.preprocess_dataframe import preprocess_dataframe
 from parsers.parsers import KlerkRuParser, RiaRuParser, KommersantParser, TinkoffParser, ConsultantRuParser
 import csv
+import pandas as pd
+import os
 import argparse
 
 # debug tool
@@ -19,7 +23,7 @@ def parse_news_timed(parser_class, tag=None, get_text=False, time_=datetime.time
         suffix = 'WithText'
     else:
         suffix = 'WithoutText'
-    with open('data/'+parser.get_filename() + f'{suffix}.csv', 'w', newline='\n') as csvfile:
+    with open('data/temp/'+parser.get_filename() + f'{suffix}.csv', 'w', newline='\n') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
         writer.writerow(list(news[0].__dict__.keys()))
         for nw in news:
@@ -28,12 +32,21 @@ def parse_news_timed(parser_class, tag=None, get_text=False, time_=datetime.time
 
 
 def run_parse_all():
-    parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(RiaRuParser, 'none-core', get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=30))
+    # parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=30))
+    # parse_news_timed(RiaRuParser, 'none-core', get_text=True, time_=datetime.timedelta(days=30))
+    # #parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
+    # parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=30))
+    # parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=30))
+    # parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=30))
+
+    content = os.listdir('data/temp')
+    content = ['data/temp/' + path for path in content if '.csv' in path]
+    counter = 1
+    for file in content:
+        dataframe = pd.read_csv(file)
+        preprocess_dataframe(dataframe)
+        dataframe.to_csv('data/dataset_{0}.csv'.format(counter))
+        counter += 1
 
 
 def get_data(parser_name: str, parser_args: dict, get_text: bool, time_: datetime.timedelta):
@@ -53,6 +66,8 @@ def get_data(parser_name: str, parser_args: dict, get_text: bool, time_: datetim
 
 
 if __name__ == '__main__':
+    nltk.download('stopwords')
+
     run_parse_all()
     # parser = argparse.ArgumentParser(description='loading news to file')
     # parser.add_argument('--name', type=str,
