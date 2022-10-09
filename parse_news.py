@@ -32,19 +32,26 @@ def parse_news_timed(parser_class, tag=None, get_text=False, time_=datetime.time
 
 
 def run_parse_all():
+    # print(0)
     # parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=30))
+    # print(1)
     # parse_news_timed(RiaRuParser, 'none-core', get_text=True, time_=datetime.timedelta(days=30))
-    # #parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
+    # print(2)
+    # parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
+    # print(2.5)
     # parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=30))
-    # parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=30))
-    # parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=30))
+    # print(3)
 
+    parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=30))
+    print(4)
+    parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=30))
+    print(5)
     content = os.listdir('data/temp')
     content = ['data/temp/' + path for path in content if '.csv' in path]
     counter = 1
     for file in content:
         dataframe = pd.read_csv(file)
-        preprocess_dataframe(dataframe)
+        dataframe = preprocess_dataframe(dataframe)
         dataframe.to_csv('data/dataset_{0}.csv'.format(counter))
         counter += 1
 
