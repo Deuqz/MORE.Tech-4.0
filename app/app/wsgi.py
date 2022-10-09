@@ -17,7 +17,9 @@ application = get_wsgi_application()
 def run_schedule():
     from utils.parse_news import run_parse_all
     import schedule
-    run_parse_all()
+    schedule.every().hour.do(run_parse_all)
+
+
 proc = multiprocessing.Process(group=None, target=run_schedule,
                                name=None, args=(),
                                kwargs={}, daemon=None)
