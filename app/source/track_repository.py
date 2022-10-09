@@ -6,10 +6,10 @@ import pandas as pd
 import os
 
 
-def parse_vector(string: str):
+def parse_vector(string: str) -> np.array:
     string = string[1:-1]
     vals_str = string.split()
-    vals = np.array([])
+    return np.array([float(x) for x in vals_str])
 
 def get_datasets(tag: (str | None) = None):
     content = os.listdir('../data')
