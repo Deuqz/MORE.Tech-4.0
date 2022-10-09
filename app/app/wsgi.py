@@ -11,6 +11,7 @@ import os
 import multiprocessing
 from django.core.wsgi import get_wsgi_application
 from utils.parse_news import run_parse_all
+from django.conf import settings
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
 
@@ -24,6 +25,9 @@ def run_schedule():
 proc = multiprocessing.Process(group=None, target=run_schedule,
                                name=None, args=(),
                                kwargs={}, daemon=None)
+if not settings.DEBUG:
+    #if we have no preloaded news load at the start of server
+    print('starting collecting small initial dataset')
+    run_parse_all(days=10)
 
-run_parse_all(days=10)
 proc.start()
