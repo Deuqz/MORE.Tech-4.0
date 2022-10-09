@@ -12,13 +12,16 @@ def analyze(role: str):
 
     target_date = datetime.datetime.now()
 
+    to_delete = set()
     for i, row in df_core.iterrows():
         if math.isnan(row['views']):
-            df_core = df_core.drop(i)
+            to_delete.add(i)
         else:
             ds = (target_date - parse(row['date'])).days
             if ds > 365 or ds < 0:
-                df_core = df_core.drop(i)
+                to_delete.add(i)
+    for i in reversed(sorted(list(to_delete))):
+        df_core = df_core.drop(i)
 
     berk_vecs = []
     for _, row in df_core.iterrows():

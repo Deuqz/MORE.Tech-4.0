@@ -31,7 +31,12 @@ class ApiViewSet(ValidationViewSet):
     @action(url_path='trends', methods=['get'], detail=False)
     def handle_trends(self, request):
         role = self.validate(RoleSerializer, request)['role']
-        res = trends.analyze(role)
+        try:
+            res = trends.analyze(role)
+        except:
+            import traceback
+            print(traceback.format_exc())
+            raise
         res_dict = []
         for i, trend in enumerate(res):
             res_dict.append([{'header': news[0], 'link': news[1]} for news in trend])
