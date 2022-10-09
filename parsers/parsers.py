@@ -238,7 +238,7 @@ class KlerkRuParser(Parser):
         page = soup.select_one(r'[class="article"]')
         text = page.select_one(r'[class="article__content"]')
         if text is None:
-            return "Text not found"
+            raise Exception('text not found')
         return text.text
 
     def get_page_news(self, page_num, get_text=False):
