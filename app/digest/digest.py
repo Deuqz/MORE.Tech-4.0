@@ -30,4 +30,4 @@ def filter_news(tag: str, role: str, role_description: str) -> pd.DataFrame:
     dataset = dataset.sort_values(by=['headers_score', 'text_score', 'date_delta', 'views'],
                                   ascending=[False, False, True, False])
 
-    return dataset[['tag', 'header', 'date', 'link']].head(5)
+    return dataset[['header', 'date', 'link']].head(5)
