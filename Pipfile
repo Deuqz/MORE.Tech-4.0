@@ -18,6 +18,10 @@ numpy = "*"
 pandas = "*"
 pymystem3 = "*"
 tqdm = "*"
+jupyter = "*"
+levenshtein = "*"
+matplotlib = "*"
+sklearn = "*"
 
 [dev-packages]
 
