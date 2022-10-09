@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from trends import trends
 from app.api.serializers import RoleSerializer
+from digest.digest import filter_news
+from django.conf import settings
 
 class ValidationViewSet(ViewSet):
     @staticmethod
@@ -20,7 +22,8 @@ class ApiViewSet(ValidationViewSet):
     permission_classes = ()
 
     @action(url_path='news', methods=['get'], detail=False)
-    def handle_relevant_news(self, request):
+    def handle_insight(self, request):
+
         return Response({'news': [{'header': 'header1', 'link': 'news1'},
                                   {'header': 'header2', 'link': 'news2'},
                                   {'header': 'header3', 'link': 'news3'}]})
@@ -36,4 +39,11 @@ class ApiViewSet(ValidationViewSet):
 
     @action(url_path='digest', methods=['get'], detail=False)
     def handle_digest(self, request):
-        return Response({'message': ['news1', 'news2', 'news3']})
+        role = self.validate(RoleSerializer, request)['role']
+        role_info = settings.ROLE_SETTINGS.get(role, None)
+        if role_info is None:
+            raise BadRequest('Incorrect role: choose one from {}'.format(', '.join(list(settings.ROLE_SEETINGS.keys()))))
+        res = []
+        for _, rows in filter_news(role, role_info['role'], role_info['role_description']).iterrows():
+            res.append({'header': rows['header'], 'link': rows['link']})
+        return Response({'digests': res})

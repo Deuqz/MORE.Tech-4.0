@@ -17,7 +17,6 @@ from django.core.management.utils import get_random_secret_key
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -28,7 +27,23 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '[::1]']
 
-
+ROLE_SETTINGS = {
+    'accountant': {
+        'role': 'Бухгалтер',
+        'role_description': """отвечает за операционную поддержку бизнеса,
+регулярную отчётность и выполнение требований
+законодательства. Этой роли важно быть в курсе
+последней информации о нормативных актах,
+условиях работы с банками и взаимодействия с
+контрагентами"""},
+    'business': {
+        'role': 'business',
+        'role_description': """отвечает за развитие и финансовую эффективность
+бизнеса. Ему важно понимать точки роста,
+возможности для масштабирования и
+удовлетворения запросов конечного клиента"""
+    }
+}
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,14 +86,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'app.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
 
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -98,7 +111,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -109,7 +121,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/

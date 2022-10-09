@@ -32,7 +32,7 @@ def get_datasets(tag = None):
     return all_datasets
 
 def get_all_datasets(tag = None):
-    content = os.listdir('../data')
+    content = os.listdir('data')
     content = ['data/' + path for path in content if '.csv' in path]
     datasets = defaultdict(list)
     for file in content:

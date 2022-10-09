@@ -329,10 +329,12 @@ class TinkoffParser(Parser):
                 views = meta.select_one(r'[class="counter--F0kEv"]').text[:-1]
             except:
                 continue
-            try:
-                views = int(views)
-            except:
+
+            views = views.lower()
+            if views[-1] == 'к' or views[-1] == 'k':
                 views = int(views[:-1])*1000
+            else:
+                views = int(views)
             text_url = self.SITE + header['href']
             if get_text:
                 news.append(News(tag='business', site='tjournal', header=header.text, date=date, views=views,
