@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 
-def get_datasets(tag: str = None):
+def get_datasets(tag: (str | None) = None):
     content = os.listdir('../data')
     content = ['../data/' + path for path in content if '.csv' in path]
     datasets = defaultdict(list)
@@ -23,7 +23,7 @@ def get_datasets(tag: str = None):
 
     return all_datasets
 
-def get_all_datasets(tag: str = None):
+def get_all_datasets(tag: (str | None) = None):
     content = os.listdir('../data')
     content = ['../data/' + path for path in content if '.csv' in path]
     datasets = defaultdict(list)
