@@ -11,9 +11,9 @@ def parse_vector(string: str) -> np.array:
     vals_str = string.split()
     return np.array([float(x) for x in vals_str])
 
-def get_datasets(tag: (str | None) = None):
-    content = os.listdir('../data')
-    content = ['../data/' + path for path in content if '.csv' in path]
+def get_datasets(tag = None):
+    content = os.listdir('data')
+    content = ['data/' + path for path in content if '.csv' in path]
     datasets = defaultdict(list)
     for file in content:
         try:
@@ -31,9 +31,9 @@ def get_datasets(tag: (str | None) = None):
     all_datasets['vectorized_text'] = all_datasets['vectorized_text'].apply(parse_vector)
     return all_datasets
 
-def get_all_datasets(tag: (str | None) = None):
+def get_all_datasets(tag = None):
     content = os.listdir('../data')
-    content = ['../data/' + path for path in content if '.csv' in path]
+    content = ['data/' + path for path in content if '.csv' in path]
     datasets = defaultdict(list)
     for file in content:
         try:
