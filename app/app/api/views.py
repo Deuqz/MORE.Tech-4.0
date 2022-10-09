@@ -2,6 +2,7 @@ from django.core.exceptions import BadRequest
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from app.trends import trends
 
 
 class ValidationViewSet(ViewSet):
@@ -26,7 +27,12 @@ class ApiViewSet(ValidationViewSet):
 
     @action(url_path='trends', methods=['get'], detail=False)
     def handle_trends(self, request):
-        return Response({'message': ['news1', 'news2', 'news3']})
+        res = trends.analyze(request.role)
+        res_dict = dict()
+        for i, trend in enumerate(res):
+            res_dict[f'Track {i + 1}'] = [f'{news[0]} (link: {news[1]})' for news in trend]
+        # return Response({'message': ['news1', 'news2', 'news3']})
+        return Response(res_dict)
 
     @action(url_path='digest', methods=['get'], detail=False)
     def handle_digest(self, request):
