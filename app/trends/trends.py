@@ -1,4 +1,6 @@
-from app.source import track_repository
+import math
+
+from source import track_repository
 from dateutil.parser import parse
 import datetime
 import numpy as np
@@ -6,18 +8,34 @@ from sklearn.cluster import KMeans
 
 
 def analyze(role: str):
+    res1 = process_role(role)
+    res2 = process_role('none-core')
+    return res1, res2
+
+
+def process_role(role: str):
     df_core = track_repository.get_datasets(role)
 
     target_date = datetime.datetime.now()
 
+    to_delete = set()
     for i, row in df_core.iterrows():
-        ds = (target_date - parse(row['date'])).days
-        if ds > 365 or ds < 0:
-            df_core = df_core.drop(i)
+        if math.isnan(row['views']):
+            to_delete.add(i)
+        else:
+            ds = (target_date - parse(row['date'])).days
+            if ds > 365 or ds < 0:
+                to_delete.add(i)
+    for i in reversed(sorted(list(to_delete))):
+        df_core = df_core.drop(i)
 
-    berk_vecs = df_core['vectorized_text']
+    berk_vecs = []
+    for _, row in df_core.iterrows():
+        berk_vecs.append(row['vectorized_text'])
 
-    kmeans = KMeans(n_clusters=10, random_state=0).fit(berk_vecs)
+    berk_vecs = np.array(berk_vecs)
+
+    kmeans = KMeans(n_clusters=10).fit(berk_vecs)
     clusters_nums = kmeans.predict(berk_vecs)
 
     uniq_clusters_nums = np.unique(clusters_nums)
@@ -32,6 +50,8 @@ def analyze(role: str):
 
     functions = []
     for cltr in clusters:
+        if len(cltr) < 5:
+            continue
         dates = df_core.loc[cltr]['date']
         views = df_core.loc[cltr]['views']
         y = [[] for _ in range(term)]

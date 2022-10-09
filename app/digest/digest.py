@@ -1,6 +1,6 @@
-from app.source.clean_data import clean_data
-from app.source.vectorize_data import vectorize_data
-from app.source.track_repository import get_datasets
+from source.clean_data import clean_data
+from source.vectorize_data import vectorize_data
+from source.track_repository import get_datasets
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import datetime

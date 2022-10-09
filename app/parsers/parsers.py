@@ -22,8 +22,6 @@ def parse_string_into_date(string: str):
                "ноября", "декабря"]
     try:
         day = int(splited_date[0])
-        if day > 31:
-            print(day)
     except:
         return datetime.date.today()
 
@@ -52,15 +50,14 @@ class ConsultantRuParser(Parser):
         news = []
 
         for delta in range(100):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i + 1, get_text) for i in range(15)]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                futures = [executor.submit(self.get_page_news, delta * 10 + i + 1, get_text) for i in range(10)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
             if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
                                                          datetime.datetime.min.time()):
                 return news
-            print(len(news))
         return news
 
     def get_page_news(self, page_num, get_text=False):
@@ -71,13 +68,10 @@ class ConsultantRuParser(Parser):
         soup = BeautifulSoup(requests.get(url).text,
                              'html.parser')
         page = soup.select_one(r'[class="news-page"]')
-        try:
-            content = page.select_one(r'[class="news-page__content"]')
-            text = content.text
-            return text
-        except:
-            print(page)
-            raise
+        content = page.select_one(r'[class="news-page__content"]')
+        text = content.text
+        return text
+
     def parse_news(self, soup: BeautifulSoup, get_text=False) -> [News]:
         items = soup.find_all('div', attrs={'class': "listing-news__item"})
         news = []
@@ -113,15 +107,14 @@ class RiaRuParser(Parser):
 
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
         news = []
-        for delta in range((delta_time.days+14) // 15):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        for delta in range((delta_time.days+9) // 10):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                 futures = [executor.submit(self.get_one_day_news,
-                                           datetime.date.today() - datetime.timedelta(days=delta * 15 + i), get_text=get_text)
-                           for i in range(15)]
+                                           datetime.date.today() - datetime.timedelta(days=delta * 10 + i), get_text=get_text)
+                           for i in range(10)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
-            print('news', len(news))
         return news
 
     def get_text(self, url):
@@ -154,7 +147,6 @@ class RiaRuParser(Parser):
             else:
                 try:
                     nxt_url = soup.select_one(r'[class="list-items-loaded"]')['data-next-url']
-                    print(nxt_url)
                 except:
                     break
             if nxt_url is None:
@@ -224,8 +216,8 @@ class KlerkRuParser(Parser):
         news = []
 
         for delta in range(100):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i+1, get_text) for i in range(15)]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                futures = [executor.submit(self.get_page_news, delta * 10 + i+1, get_text) for i in range(10)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
@@ -256,16 +248,15 @@ class KommersantParser(Parser):
 
     def get_news_timed(self, get_text=False, delta_time=datetime.timedelta(days=30)):
         news = []
-        for delta in range((delta_time.days + 14) // 15):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        for delta in range((delta_time.days + 9) // 10):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
                 futures = [executor.submit(self.get_one_day_news,
-                                           datetime.date.today() - datetime.timedelta(days=delta * 15 + i),
+                                           datetime.date.today() - datetime.timedelta(days=delta * 10 + i),
                                            get_text=get_text)
-                           for i in range(15)]
+                           for i in range(10)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
-            print('news', len(news))
         return news
 
     def get_views_and_text(self, url):
@@ -318,7 +309,6 @@ class TinkoffParser(Parser):
         page = soup.select_one(r'[class="content---3kpa12"]')
         items = page.select(r'[class="item--HDDKc"]')
         news = []
-        cnt = 0
         date = None
         for item in items:
             header_info = item.select_one(r'[class="header--RPV23"]')
@@ -329,10 +319,13 @@ class TinkoffParser(Parser):
                 views = meta.select_one(r'[class="counter--F0kEv"]').text[:-1]
             except:
                 continue
+
             try:
                 views = int(views)
             except:
-                views = int(views[:-1])*1000
+                views = int(views[:-1])
+            if views < 30:
+                views *= 1000
             text_url = self.SITE + header['href']
             if get_text:
                 news.append(News(tag='business', site='tjournal', header=header.text, date=date, views=views,
@@ -352,24 +345,17 @@ class TinkoffParser(Parser):
     def get_news_timed(self, delta_time=None, get_text=None):
         news = []
 
-        for delta in range(300):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-                futures = [executor.submit(self.get_page_news, delta * 15 + i+1, get_text) for i in range(15)]
+        for delta in range(100):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(self.get_page_news, delta * 5 + i+1, get_text) for i in range(5)]
                 for future in concurrent.futures.as_completed(futures):
                     nw = future.result()
                     news += nw
-            print(datetime.datetime.combine(datetime.date.today() - delta_time,
-                                                         datetime.datetime.min.time()))
             if news[-1].date < datetime.datetime.combine(datetime.date.today() - delta_time,
                                                          datetime.datetime.min.time()):
                 return news
-            print(len(news))
         return news
 
     def get_page_news(self, page_num, get_text):
-        try:
-            soup = BeautifulSoup(requests.get(self.SITE+f'flows/business-all/page/{page_num}').text, 'html.parser')
-        except:
-            print(page_num)
-            raise
+        soup = BeautifulSoup(requests.get(self.SITE+f'flows/business-all/page/{page_num}').text, 'html.parser')
         return self.parse_news(soup, get_text)

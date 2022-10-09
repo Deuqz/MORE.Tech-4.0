@@ -31,13 +31,21 @@ def parse_news_timed(parser_class, tag=None, get_text=False, time_=datetime.time
     return parser.get_filename() + f'{suffix}.csv'
 
 
-def run_parse_all():
-    parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(RiaRuParser, 'none-core', get_text=True, time_=datetime.timedelta(days=15))
-    parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=15))
-    parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=30))
-    parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=30))
+def run_parse_all(days=30):
+    # print(f'Starting parsing for days_count={days}')
+    # parse_news_timed(ConsultantRuParser, get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected Consultant news')
+    # parse_news_timed(RiaRuParser, 'none-core', get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected RiaRu none-core news')
+    # parse_news_timed(RiaRuParser, 'accountant', get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected Ria ru economy news')
+    # parse_news_timed(KlerkRuParser, get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected KlerkRu news')
+    # parse_news_timed(KommersantParser, get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected Kommersant news')
+    # parse_news_timed(TinkoffParser, get_text=True, time_=datetime.timedelta(days=days))
+    # print('Collected TJournal news')
+    # print("Starting vectorizing datasets")
     content = os.listdir('data/temp')
     content = ['data/temp/' + path for path in content if '.csv' in path]
     counter = 1
@@ -46,7 +54,4 @@ def run_parse_all():
         dataframe = preprocess_dataframe(dataframe)
         dataframe.to_csv('data/dataset_{0}.csv'.format(counter), index=False)
         counter += 1
-    raise Exception('aboba')
-
-if __name__ == '__main__':
-    run_parse_all()
+    print('Collecting datasets finished')
